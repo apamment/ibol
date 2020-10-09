@@ -1,4 +1,5 @@
 #include <core/datetime.h>
+#include <core/log.h>
 #include <sdk/config.h>
 #include <sdk/net/networks.h>
 #include <sdk/msgapi/message_api_wwiv.h>
@@ -6,6 +7,9 @@
 #include <OpenDoor.h>
 #include "Program.h"
 #include "INIReader.h"
+#ifdef _MSC_VER
+#include <direct.h>
+#endif
 
 static wwiv::sdk::subboard_t default_sub(const std::string& fn) {
 	wwiv::sdk::subboard_t sub{};
@@ -15,7 +19,7 @@ static wwiv::sdk::subboard_t default_sub(const std::string& fn) {
 }
 
 static std::optional<wwiv::sdk::subboard_t> find_sub(const wwiv::sdk::Subs& subs, const std::string& filename) {
-	for (auto& x : subs.subs()) {
+	for (const auto& x : subs.subs()) {
 		if (_stricmp(filename.c_str(), x.filename.c_str()) == 0) {
 			return { x };
 		}
@@ -154,13 +158,11 @@ int Program::run() {
 	auto x = new wwiv::sdk::msgapi::NullLastReadImpl();
 	wwiv::sdk::msgapi::MessageApiOptions opts;
 
-	const auto& api = new wwiv::sdk::msgapi::WWIVMessageApi(opts, *config, networks.networks(), x);
-
-	std::unique_ptr<wwiv::sdk::msgapi::MessageArea> area(api->Open(sub, -1));
-
+	const auto& api = std::make_unique<wwiv::sdk::msgapi::WWIVMessageApi>(opts, *config, networks.networks(), x); 
 	
-
-	for (auto current = 1; current <= area->number_of_messages(); current++) {
+	std::unique_ptr<wwiv::sdk::msgapi::MessageArea> area(api->CreateOrOpen(sub, -1));
+	
+	for (auto current = 1; current <=  area->number_of_messages(); current++) {
 		auto message = area->ReadMessage(current);
 		if (message->header().title() == "InterBBS Oneliner") {
 			std::vector<std::string> lines;
@@ -220,6 +222,7 @@ int Program::run() {
 	fclose(fptr);
 
 	while (true) {
+		od_clr_scr();
 		od_printf("`bright black`+----------------------------------------------------------------------------+\r\n");
 		od_printf("`bright black`|`bright yellow green` InterBBS Oneliners for WWIV!                                               `bright black`|\r\n");
 		od_printf("`bright black`+----------------------------------------------------------------------------+\r\n");
@@ -248,24 +251,32 @@ int Program::run() {
 				std::unique_ptr<wwiv::sdk::msgapi::Message> msg(area->CreateMessage());
 				auto daten = wwiv::core::DateTime::now();
 				msg->header().set_from_system(0);
-				msg->header().set_from_usernum(static_cast<uint16_t>(od_control_get()->user_num));
+				msg->header().set_from_usernum(od_control_get()->user_num);
 				msg->header().set_title("InterBBS Oneliner");
 				msg->header().set_from(std::string(od_control_get()->user_handle));
-				msg->header().set_to("IBBS1LINE");
+				msg->header().set_to(std::string("IBBS1LINE"));
 				msg->header().set_daten(daten.to_daten_t());
-				msg->header().set_in_reply_to("");
 				msg->text().set_text(ss.str());
 
 				wwiv::sdk::msgapi::MessageAreaOptions area_options{};
 				area_options.send_post_to_network = true;
+				std::filesystem::path cpath = std::filesystem::current_path();
+				chdir(wwiv_path.c_str());
 				area->AddMessage(*msg, area_options);
+				chdir(cpath.u8string().c_str());
 			}
 			return 0;
 		}
 		case 'v':
 		case 'V':
-			od_printf("\r\n");
+			od_clr_scr();
+			od_printf("`bright black`+----------------------------------------------------------------------------+\r\n");
+			od_printf("`bright black`|`bright yellow green` InterBBS Oneliners for WWIV!                                               `bright black`|\r\n");
+			od_printf("`bright black`+----------------------------------------------------------------------------+\r\n");
 			od_send_file("ibol.ans");
+			od_printf("`bright white`Press any key to continue...");
+			od_get_key(TRUE);
+			od_printf("\r\n");
 			break;
 		default:
 			return 0;
