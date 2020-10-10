@@ -9,6 +9,9 @@
 #include "INIReader.h"
 #ifdef _MSC_VER
 #include <direct.h>
+#else
+#include <unistd.h>
+#define _stricmp strcasecmp
 #endif
 
 static wwiv::sdk::subboard_t default_sub(const std::string& fn) {
