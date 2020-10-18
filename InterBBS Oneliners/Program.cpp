@@ -246,7 +246,6 @@ int Program::run() {
 			if (lines.size() > 0) {
 				std::stringstream ss;
 				ss.str("");
-				ss << "\0040FidoAddr: IBBS1LINE\r\n";
 				ss << "Author: " << od_control_get()->user_handle << "\r\n";
 				ss << "Source: " << system_name << "\r\n";
 				for (size_t i = 0; i < lines.size(); i++) {
