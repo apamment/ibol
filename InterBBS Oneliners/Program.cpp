@@ -92,9 +92,10 @@ static std::vector<std::string> word_wrap(std::string str, int len) {
 		if (str[i] == ' ') {
 			last_space = i;
 		}
-		if (i > 0 && i % len == 0) {
+		if (i - line_start == len) {
 			strvec.push_back(str.substr(line_start, last_space - line_start));
 			line_start = last_space + 1;
+			i = line_start;
 		}
 	}
 
@@ -203,22 +204,22 @@ int Program::run() {
 	}
 
 	for (size_t i = 0; i < oneliners->size(); i++) {
-		std::vector<std::string> olinesplit = word_wrap(oneliners->at(i)->oneliner.str(), 52);
+		std::vector<std::string> olinesplit = word_wrap(oneliners->at(i)->oneliner.str(), 56);
 		fprintf(fptr, "\x1b[1;30m------------------------------------------------------------------------------\r\n");
 		for (size_t x = 0; x < olinesplit.size(); x++) {
 			if (x == 0) {
-				fprintf(fptr, "\x1b[1;33m%25.25s\x1b[1;30m: \x1b[1;37m%-52.52s\r\n", oneliners->at(i)->author.c_str(), olinesplit.at(x).c_str());
+				fprintf(fptr, "\x1b[1;33m%20.20s\x1b[1;30m: \x1b[1;37m%-56.56s\r\n", oneliners->at(i)->author.c_str(), olinesplit.at(x).c_str());
 			}
 			else if (x == 1) {
-				fprintf(fptr, "\x1b[1;32m%25.25s\x1b[1;30m: \x1b[1;37m%-52.52s\r\n", oneliners->at(i)->source.c_str(), olinesplit.at(x).c_str());
+				fprintf(fptr, "\x1b[1;32m%20.20s\x1b[1;30m: \x1b[1;37m%-56.56s\r\n", oneliners->at(i)->source.c_str(), olinesplit.at(x).c_str());
 			}
 			else {
-				fprintf(fptr, "                         \x1b[1;30m: \x1b[1;37m%-52.52s\r\n", olinesplit.at(x).c_str());
+				fprintf(fptr, "                    \x1b[1;30m: \x1b[1;37m%-52.52s\r\n", olinesplit.at(x).c_str());
 			}
 		}
 
 		if (olinesplit.size() == 1) {
-			fprintf(fptr, "\x1b[1;32m%25.25s\x1b[1;30m:\r\n", oneliners->at(i)->source.c_str());
+			fprintf(fptr, "\x1b[1;32m%20.20s\x1b[1;30m:\r\n", oneliners->at(i)->source.c_str());
 		}
 	}
 	fprintf(fptr, "\x1b[1;30m------------------------------------------------------------------------------\r\n");
