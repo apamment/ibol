@@ -93,13 +93,21 @@ static std::vector<std::string> word_wrap(std::string str, int len) {
 			last_space = i;
 		}
 		if (i - line_start == len) {
-			strvec.push_back(str.substr(line_start, last_space - line_start));
-			line_start = last_space + 1;
-			i = line_start;
+			if (last_space == line_start) {
+				strvec.push_back(str.substr(line_start, i - line_start));
+				line_start = i;
+				last_space = i;
+			}
+			else {
+				strvec.push_back(str.substr(line_start, last_space - line_start));
+				line_start = last_space + 1;
+				i = line_start;
+				last_space = line_start;
+			}
 		}
 	}
 
-	if (last_space < str.size()) {
+	if (line_start < str.size()) {
 		strvec.push_back(str.substr(line_start));
 	}
 	return strvec;
